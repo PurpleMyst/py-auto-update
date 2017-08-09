@@ -2,19 +2,39 @@
 import inspect
 import os
 import subprocess
+import sys
 import threading
 import time
 
 interval = 5  # seconds
 
 
+def _get_output(args):
+    process = subprocess.run(args,
+                             stdout=subprocess.PIPE)
+    assert process.returncode == 0
+    return process.stdout.decode("ascii").strip()
+
+
 def _worker(relpath):
+    remote = "origin"
+    branch = _get_output(["git", "symbolic-ref", "--short", "HEAD"])
+    commit_hash = _get_output(["git", "rev-parse", "HEAD"])
+    print(f"Working on {remote}/{branch}@{commit_hash}")
+
     while True:
-        command = subprocess.run(["git", "pull", "origin", "master"])
+        command = subprocess.run(["git", "pull", remote, branch],
+                                 stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
+
         if command.returncode == 0:
-            print("yaey")
-        else:
-            print("oh noes")
+            new_commit_hash = _get_output(["git", "rev-parse", "HEAD"])
+            print("Got commit", new_commit_hash)
+
+            if new_commit_hash != commit_hash:
+                print("Restarting..")
+                os.execl(sys.executable, relpath)
+
         time.sleep(interval)
 
 
