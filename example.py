@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import autoupdater
 
-value = 123
+value = 1234
 
 
 def main():

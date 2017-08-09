@@ -16,11 +16,11 @@ def _get_output(args):
     return process.stdout.decode("ascii").strip()
 
 
-def _worker(relpath):
+def _worker(filepath):
     remote = "origin"
     branch = _get_output(["git", "symbolic-ref", "--short", "HEAD"])
     commit_hash = _get_output(["git", "rev-parse", "HEAD"])
-    print(f"Working on {remote}/{branch}@{commit_hash}")
+    # print(f"Working on {remote}/{branch}@{commit_hash}")
 
     while True:
         command = subprocess.run(["git", "pull", remote, branch],
@@ -29,11 +29,11 @@ def _worker(relpath):
 
         if command.returncode == 0:
             new_commit_hash = _get_output(["git", "rev-parse", "HEAD"])
-            print("Got commit", new_commit_hash)
+            # print("Got commit", new_commit_hash)
 
-            if new_commit_hash != commit_hash:
-                print("Restarting..")
-                os.execl(sys.executable, relpath)
+            if new_commit_hash != commit_hash or True:
+                # print("Restarting..")
+                os.execlp(sys.executable, sys.executable, filepath)
 
         time.sleep(interval)
 
@@ -45,6 +45,5 @@ def initialize():
     assert parent_globals["__name__"] == "__main__"
 
     filepath = parent_globals["__file__"]
-    relpath = os.path.relpath(filepath)
 
-    threading.Thread(target=_worker, args=(relpath,)).start()
+    threading.Thread(target=_worker, args=(filepath,)).start()
